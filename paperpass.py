@@ -39,7 +39,6 @@ def turn_vector(str):
 
 # 计算相似度
 def similarity_vul(str_x, str_y):
-
     texts = [str_x, str_y]
     # 使用gensim.corpora获得语料库
     dictionary = gensim.corpora.Dictionary(texts)
@@ -62,7 +61,7 @@ def main_test():
     # 输出结果的文件路径
     save_path = input("保存结果的绝对路径：")
 
-    # 简单的错误处理
+    # 简单的异常处理
     if not os.path.exists(txt_1):
         print("参考论文文件不存在！")
         exit()
