@@ -3,10 +3,9 @@
 
 # 3219005451 肖丽萍 19级信息安全1班
 # 软件工程个人项目 论文查重
-
+import gensim
 import jieba
 import re
-import gensim
 import os
 
 
@@ -40,16 +39,18 @@ def turn_vector(str):
 
 # 计算相似度
 def similarity_vul(str_x, str_y):
+
     texts = [str_x, str_y]
     # 使用gensim.corpora获得语料库
     dictionary = gensim.corpora.Dictionary(texts)
-    num_features = len(dictionary.token2id)
     # 利用doc2bow作为词袋模型
     corpus = [dictionary.doc2bow(text) for text in texts]
-    similarity = gensim.similarities.Similarity('-Similarity-index', corpus, num_features)
+    # 通过token2id得到特征数（字典里面键的个数）
+    num_features = len(dictionary.token2id.keys())
+    sim = gensim.similarities.Similarity('-Similarity-index', corpus, num_features)
     # 获取文章相似度
-    test_corpus_1 = dictionary.doc2bow(str_x)
-    cosine_sim = similarity[test_corpus_1][1]
+    test_corpus = dictionary.doc2bow(str_x)
+    cosine_sim = sim[test_corpus][1]
     return cosine_sim
 
 
@@ -58,15 +59,32 @@ def main_test():
     # 为了方便命令行输入，这里加了一些提示性文本使用户体验更加友好
     txt_1 = input("参考论文的绝对路径：")
     txt_2 = input("待检察文件的绝对路径：")
-    # 简单的错误处理
-    if not os.path.exists(txt_1):
-        print("文件不存在")
-        exit()
-    if not os.path.exists(txt_2):
-        print("文件不存在")
-        exit()
     # 输出结果的文件路径
     save_path = input("保存结果的绝对路径：")
+
+    # 简单的错误处理
+    if not os.path.exists(txt_1):
+        print("参考论文文件不存在！")
+        exit()
+    if not os.path.exists(txt_2):
+        print("待检察文件不存在！")
+        exit()
+    if not txt_1.endswith('.txt'):
+        print("参考论文文件格式错误!")
+        exit()
+    if not txt_2.endswith('.txt'):
+        print("待检察文件格式错误!")
+        exit()
+    if not save_path.endswith('.txt'):
+        print("输出结果文件格式错误!")
+        exit()
+    if os.path.getsize(txt_1) == 0:
+        print("参考论文文件为空！")
+        exit()
+    if os.path.getsize(txt_2) == 0:
+        print("待检察文件为空！")
+        exit()
+
     # 将文本提取出来，去除标点符号，转化为字符串
     str_1 = get_content(txt_1)
     str_2 = get_content(txt_2)
