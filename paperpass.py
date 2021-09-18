@@ -1,18 +1,86 @@
-import sys
-import gensim
+#!/usr/bin/env python
+# coding: utf-8
+
+# 3219005451 肖丽萍 19级信息安全1班
+# 软件工程个人项目 论文查重
+
 import jieba
 import re
+import gensim
 import os
 
-#获取文本路径，很简单的读取文本的方法
-def get_file(path):
+
+def get_content(path):
+    # 文本处理，将我们的文本处理为字符串，并且过滤掉标点符号
     string = ''
-    f = open(path, 'r', encoding='UTF-8') #设置UTF-8以防乱码
-    line = f.readline()
-    while line:
-        string = string + line
-        line = f.readline()
-    f.close()  #读完记得关闭以免占用资源
+    file = open(path, 'r', encoding='UTF-8')
+    one_line = file.readline()
+    while one_line:
+        string += one_line
+        one_line = file.readline()
+    # 调用标点符号过滤函数
+    string = Symbol_filter(string)
+    file.close()
     return string
 
 
+# 过滤器
+def Symbol_filter(str):
+    # 使用正则表达式过滤，保留字母与汉字
+    result = re.compile(u"[^a-zA-Z0-9\u4e00-\u9fa5]").sub("", str)
+    return result
+
+
+# 分词
+def turn_vector(str):
+    # 将字符串使用jieba.lcut切片用list保存
+    string = jieba.lcut(str)
+    return string
+
+
+# 计算相似度
+def similarity_vul(str_x, str_y):
+    texts = [str_x, str_y]
+    # 使用gensim.corpora获得语料库
+    dictionary = gensim.corpora.Dictionary(texts)
+    num_features = len(dictionary.token2id)
+    # 利用doc2bow作为词袋模型
+    corpus = [dictionary.doc2bow(text) for text in texts]
+    similarity = gensim.similarities.Similarity('-Similarity-index', corpus, num_features)
+    # 获取文章相似度
+    test_corpus_1 = dictionary.doc2bow(str_x)
+    cosine_sim = similarity[test_corpus_1][1]
+    return cosine_sim
+
+
+# 主函数
+def main_test():
+    # 为了方便命令行输入，这里加了一些提示性文本使用户体验更加友好
+    txt_1 = input("参考论文的绝对路径：")
+    txt_2 = input("待检察文件的绝对路径：")
+    # 简单的错误处理
+    if not os.path.exists(txt_1):
+        print("文件不存在")
+        exit()
+    if not os.path.exists(txt_2):
+        print("文件不存在")
+        exit()
+    # 输出结果的文件路径
+    save_path = input("保存结果的绝对路径：")
+    # 将文本提取出来，去除标点符号，转化为字符串
+    str_1 = get_content(txt_1)
+    str_2 = get_content(txt_2)
+    # 获取分词后的字符串
+    vector_1 = turn_vector(str_1)
+    vector_2 = turn_vector(str_2)
+    # 计算相似度
+    similarity = similarity_vul(vector_1, vector_2)
+    print("这两篇文章的相似度： %.4f" % similarity)
+    #  将相似度结果写入指定文件
+    f = open(save_path, 'w', encoding="UTF-8")
+    f.write("这两篇文章的相似度： %.4f" % similarity)
+    f.close()
+
+
+if __name__ == '__main__':
+    main_test()
